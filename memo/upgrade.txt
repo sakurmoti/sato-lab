@@ -1,0 +1,9 @@
+改善案:
+
+Deg_predictor.pyのpredictorクラス、predict関数でいちいちseqをエンコードするのは遅い
+可能ならばエンコードしたもの、すなわち始めから数値で扱う
+
+もしこれが出来たらTEpredではATGC, DegpredではAUGCの問題が解決されそう
+
+-> いや、そもそもDegpredだとエンコードするんだからATGCで扱っても問題ないな
+-> predictorクラスのself.tokensをACGUからACGTにしてしまえば一緒な気がする

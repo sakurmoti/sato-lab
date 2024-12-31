@@ -1,0 +1,4 @@
+modulesのTE modelはMJ4~~.pyで学習した
+「MJ4_seed1337_TE_ESM2SI_3.1.1e-2.M.dropout2_mixed_te_log_utr_seqlen100_AvgEmbFalse_BosEmbTrue_CNNlayer0_epoch300_patiences0_nodes40_dropout30.2_finetuneTrue_huberlossTrue_magicFalse_lr0.01_fold8_epoch179.pt」
+が元になっている
+
