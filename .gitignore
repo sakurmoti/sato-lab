@@ -1,4 +1,4 @@
 **/__pycache__/**
 .vscode/**
 *.sh
-modules/RibonanzaNet-Deg.pt
+GA/modules/data
