@@ -50,17 +50,21 @@ class predictor():
         # configPath = pathlib.Path(__file__).parent / 'pairwise.yaml'
         # modelPath = pathlib.Path(__file__).parent / 'RibonanzaNet-Deg.pt'
         self.model = finetuned_RibonanzaNet(load_config_from_yaml(configPath)).cuda()
-        self.model.load_state_dict(torch.load(modelPath, map_location='cpu', weights_only=True))
+        self.model.load_state_dict(torch.load(modelPath, map_location='cuda', weights_only=True))
         self.model.eval()
-        self.tokens = {j:i for i,j in enumerate('ACGT')}
-        
+        # self.tokens = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
+        self.tokens = [0]*128
+        self.tokens[ord('A')] = 0
+        self.tokens[ord('C')] = 1
+        self.tokens[ord('G')] = 2
+        self.tokens[ord('T')] = 3
+
 
     def predict(self, sequence):
-        example = [self.tokens[nt] for nt in sequence]
-        example = np.array(example)
-        example = torch.tensor(example)
-
-        seq = example.cuda().unsqueeze(0)
+        example = np.array([self.tokens[ord(nt)] for nt in sequence])
+        # print(example)
+        seq = torch.tensor(example, device='cuda').unsqueeze(0)
+        # print(seq)
         with torch.no_grad():
             return self.model(seq).cpu().numpy()
         
