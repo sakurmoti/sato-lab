@@ -24,27 +24,49 @@ Degpred = Deg_predictor.predictor()
 def evaluate(individual):
     seq = ''.join(individual)
 
-    # x = TEpred.predict(seq)  # 第一目的関数
-    x=5
-    y = Deg_predictor.score_sum(Degpred.predict(seq), label='reactivity')  # 第二目的関数
+    x = TEpred.predict(seq)  # 第一目的関数
+    y = Deg_predictor.score_sum(Degpred.predict(seq), label='deg_50C')  # 第二目的関数
     return x, y
 
 def mutate(individual):
-    idx = random.randint(0, len(individual)-1)
-    individual[idx] = random.choice(['A', 'T', 'C', 'G'])
+    indpb = 0.5 # 変異する遺伝子の割合
+    for i in range(len(individual)):
+        if random.random() < indpb:
+            individual[i] = random.choice(['A', 'T', 'C', 'G'])
     return individual,
 
 toolbox.register("evaluate", evaluate)
-toolbox.register("mutate", mutate)
-toolbox.register("select", tools.selNSGA3, ref_points=tools.uniform_reference_points(nobj=2, p=12))
-toolbox.register("mate", tools.cxTwoPoint)
 
-if __name__ == "__main__":
+
+print("mutation: mutate, indpb=0.5")
+toolbox.register("mutate", mutate)
+
+
+# sel_f = "selNSGA3"
+sel_f = "selNSGA2"
+if(sel_f == "selNSGA3"):
+    print("selection: selNSGA3")
+    toolbox.register("select", tools.selNSGA3, ref_points=tools.uniform_reference_points(nobj=2, p=12))
+else:
+    print("selection: selNSGA2")
+    toolbox.register("select", tools.selNSGA2)
+
+# mate_f = "cxTwoPoint"
+mate_f = "cxUniform"
+if(mate_f == "cxTwoPoint"):
+    print(f"mate: cxTwoPoint")
+    toolbox.register("mate", tools.cxTwoPoint)
+else:
+    print(f"mate: cxUniform (indpb=0.5)")
+    toolbox.register("mate", tools.cxUniform, indpb=0.5)
+
+def main(fold=None):
     random.seed(0)
-    
+
     # 初期集団生成
-    MU = 1000  # 集団サイズ
-    NGEN = 500  # 世代数
+    MU = 2000  # 集団サイズ
+    NGEN = 1000  # 世代数
+    # NGEN = 600
     CXPB = 0.75  # 交叉確率
     MUTPB = 0.25  # 突然変異確率
     pop = toolbox.population(n=MU)
@@ -64,21 +86,27 @@ if __name__ == "__main__":
         ngen=NGEN, stats=stats, halloffame=None, verbose=True
     )
 
-    record = stats.compile(pop)
 
     import pickle
-    with open('/home/sato-lab.org/takayu/project/sato-lab/slurm/logs/deap/img/logbook702.pkl', 'wb') as f:
+    import os
+    jobid = os.environ['SLURM_JOB_ID']
+    path = '/home/sato-lab.org/takayu/project/sato-lab/slurm/logs/deap/logbook/logbook' + jobid
+    if(fold is not None):
+        path += f"_fold{fold}"
+    path += '.pkl'
+    with open(path, 'wb') as f:
         pickle.dump(logbook, f)
-
+    
     # plot result
     gen = logbook.select("gen")
 
     fit_mins = logbook.select("min")
+    fit_maxs = logbook.select("max")
     fit_avgs = logbook.select("avg")
 
     te_mins = [x[0] for x in fit_mins]
     te_avgs = [x[0] for x in fit_avgs]
-    deg_mins = [x[1] for x in fit_mins]
+    deg_maxs = [x[1] for x in fit_maxs]
     deg_avgs = [x[1] for x in fit_avgs]
 
 
@@ -87,7 +115,7 @@ if __name__ == "__main__":
     ax2 = ax1.twinx()
     ax1.plot(gen, te_mins, label='TE min', color='blue')
     ax1.plot(gen, te_avgs, label='TE avg', color='lightblue')
-    ax2.plot(gen, deg_mins, label='DEG min', color='red')
+    ax2.plot(gen, deg_maxs, label='DEG max', color='red')
     ax2.plot(gen, deg_avgs, label='DEG avg', color='salmon')
 
     ax1.set_xlabel('Generation')
@@ -99,8 +127,18 @@ if __name__ == "__main__":
     handles2, labels2 = ax2.get_legend_handles_labels()
     ax1.legend(handles1 + handles2, labels1 + labels2, loc='center right')
 
-    
-    plt.savefig('/home/sato-lab.org/takayu/project/sato-lab/slurm/logs/deap/img/plot702.png')
+    path = '/home/sato-lab.org/takayu/project/sato-lab/slurm/logs/deap/img/plot' + jobid
+    if(fold is not None):
+        path += f"_fold{fold}"
+    path += '.png'
+    plt.savefig(path)
 
     seqs = ["".join(ind) for ind in pop]
+    st = set(seqs)
+    seqs = list(st)
+    print(len(seqs))
     print(seqs)
+    
+
+if __name__ == "__main__":
+    main()

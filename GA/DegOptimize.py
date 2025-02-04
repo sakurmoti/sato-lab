@@ -1,95 +1,134 @@
-import numpy as np
 import random
-import pandas as pd
+import numpy as np
 from deap import base, creator, tools, algorithms
-import sys
-from modules import Deg_predictor
-creator.create("FitnessMax", base.Fitness, weights=(1.0,)) # 最大化問題として定義
-creator.create("Individual", list, fitness=creator.FitnessMax) # 個体の定義
 
-# toolbox.registerにより関数を登録する
+# Types
+creator.create("FitnessMax", base.Fitness, weights=(-1.0, 1.0))
+creator.create("Individual", list, fitness=creator.FitnessMax)
+
+# Initialize
+def generate_individual():
+    length = 50
+    return [random.choice(['A', 'T', 'C', 'G']) for _ in range(length)]
+
 toolbox = base.Toolbox()
-toolbox.register("attr_rna", random.choice, ['A', 'U', 'C', 'G']) # 個体の取りうる値を決める関数
-toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_rna, n=100) # 個体を生成する関数
-toolbox.register("population", tools.initRepeat, list, toolbox.individual) # 集団を生成する関数
+toolbox.register("individual", tools.initIterate, creator.Individual, generate_individual)
+toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
-# 選択 := トーナメント選択
-toolbox.register("select", tools.selTournament, tournsize=3)
 
-# 交叉 := 2つの親個体をランダムに選び、ランダムな遺伝子座を選んで交換する
-def cxRna(ind1, ind2):
-    idx = random.randint(0, len(ind1)-1)
-    ind1[idx], ind2[idx] = ind2[idx], ind1[idx]
-    return ind1, ind2
-toolbox.register("mate", cxRna)
-
-# 突然変異 := 個体の遺伝子座をランダムに選び、ランダムな遺伝子に置き換える
-def mutRna(individual):
-    idx = random.randint(0, len(individual)-1)
-    individual[idx] = random.choice(['A', 'U', 'C', 'G'])
-    return individual,
-toolbox.register("mutate", mutRna)
-
-# deg_50C, deg_Mg_50Cの最小化を図る
-model = Deg_predictor.predictor()
+# Operators
+from modules import TE_predictor
+from modules import Deg_predictor
+TEpred = TE_predictor.predictor()
+Degpred = Deg_predictor.predictor()
 def evaluate(individual):
     seq = ''.join(individual)
-    score = model.predict(seq)
-    # print(score.shape)
 
-    df = Deg_predictor.score_to_df(score)
-    return -df['deg_50C'].sum(),
-    
+    x = TEpred.predict(seq)  # 第一目的関数
+    y = Deg_predictor.score_sum(Degpred.predict(seq), label='deg_50C')  # 第二目的関数
+    individual.x_value = x
+    return (y, 0)
 
-    
+def mutate(individual):
+    indpb = 0.5 # 変異する遺伝子の割合
+    for i in range(len(individual)):
+        if random.random() < indpb:
+            individual[i] = random.choice(['A', 'T', 'C', 'G'])
+    return individual,
+
 toolbox.register("evaluate", evaluate)
 
+print("mutation: mutate, indpb=0.5")
+toolbox.register("mutate", mutate)
 
-def opts():
-    import argparse
-    parser = argparse.ArgumentParser(description='GA')
-    parser.add_argument('--pop', type=int, default=300, help='population size')
-    parser.add_argument('--ngen', type=int, default=200, help='number of generation')
-    parser.add_argument('--cxpb', type=float, default=0.9, help='crossover probability')
-    parser.add_argument('--mutpb', type=float, default=0.1, help='mutation probability')
-    args = parser.parse_args()
-    return args
 
-def main():
-    # 遺伝的アルゴリズムのパラメータ
+sel_f = "selNSGA3"
+# sel_f = "selNSGA2"
+if(sel_f == "selNSGA3"):
+    print("selection: selNSGA3")
+    toolbox.register("select", tools.selNSGA3, ref_points=tools.uniform_reference_points(nobj=2, p=12))
+else:
+    print("selection: selNSGA2")
+    toolbox.register("select", tools.selNSGA2)
+
+mate_f = "cxTwoPoint"
+# mate_f = "cxUniform"
+if(mate_f == "cxTwoPoint"):
+    print(f"mate: cxTwoPoint")
+    toolbox.register("mate", tools.cxTwoPoint)
+else:
+    print(f"mate: cxUniform (indpb=0.5)")
+    toolbox.register("mate", tools.cxUniform, indpb=0.5)
+
+if __name__ == "__main__":
     random.seed(0)
-    args = opts()
-
-    # 初期集団を生成
-    population = toolbox.population(n=args.pop)
-
-    # 適応度を計算
-    for individual in population:
-        individual.fitness.values = toolbox.evaluate(individual)
     
-    # 世代数分進化を繰り返す
-    for gen in range(args.ngen):
-        offspring = algorithms.varAnd(population, toolbox, cxpb=args.cxpb, mutpb=args.mutpb) # 交叉と突然変異
-        for child in offspring:
-            child.fitness.values = toolbox.evaluate(child) # 適応度の計算
+    # 初期集団生成
+    MU = 2000  # 集団サイズ
+    NGEN = 1000  # 世代数
+    CXPB = 0.75  # 交叉確率
+    MUTPB = 0.25  # 突然変異確率
+    pop = toolbox.population(n=MU)
 
-        population = toolbox.select(population + offspring, len(population)) # 次世代の選択
+    print(f"params: MU={MU}, NGEN={NGEN}, CXPB={CXPB}, MUTPB={MUTPB}")
 
-        # 適応度の統計情報を出力
-        fits = [ind.fitness.values[0] for ind in population]
-        length = len(population)
-        mean = sum(fits) / length
-        sum2 = sum(x*x for x in fits)
-        std = abs(sum2 / length - mean**2)**0.5
-        print(f'gen: {gen}, avg: {mean}, std: {std}')
+    # 統計情報の収集用ツール
+    stats = tools.Statistics(lambda ind: (ind.fitness.values[0], getattr(ind, "x_value", None)))
+    stats.register("avg", lambda vals: (np.mean([v[0] for v in vals]), np.mean([v[1] for v in vals if v[1] is not None])))
+    stats.register("std", lambda vals: (np.std([v[0] for v in vals]), np.std([v[1] for v in vals if v[1] is not None])))
+    stats.register("min", lambda vals: (np.min([v[0] for v in vals]), np.min([v[1] for v in vals if v[1] is not None])))
+    stats.register("max", lambda vals: (np.max([v[0] for v in vals]), np.max([v[1] for v in vals if v[1] is not None])))
+
+
+    print(creator.Individual.fitness.weights)
+
+    # 最適化開始
+    result, logbook = algorithms.eaMuPlusLambda(
+        pop, toolbox, mu=MU, lambda_=MU, cxpb=CXPB, mutpb=MUTPB,
+        ngen=NGEN, stats=stats, halloffame=None, verbose=True
+    )
+
+
+    import pickle
+    import os
+    jobid = os.environ['SLURM_JOB_ID']
+    with open('/home/sato-lab.org/takayu/project/sato-lab/slurm/logs/deap/img/logbook' + jobid + '_Degonly.pkl', 'wb') as f:
+        pickle.dump(logbook, f)
     
-    # 最終世代の適応度を出力
-    top10 = tools.selBest(population, 10)
-    for i, ind in enumerate(top10):
-        seq = ''.join(ind)
-        print(f'rank: {i}, {seq}, {ind.fitness.values}')
+    # plot result
+    gen = logbook.select("gen")
+
+    fit_mins = logbook.select("min")
+    fit_maxs = logbook.select("max")
+    fit_avgs = logbook.select("avg")
+
+    te_mins = [x[1] for x in fit_mins]
+    te_avgs = [x[1] for x in fit_avgs]
+    deg_maxs = [x[0] for x in fit_maxs]
+    deg_avgs = [x[0] for x in fit_avgs]
 
 
-if __name__ == '__main__':
-    main()
-    print('Done')
+    import matplotlib.pyplot as plt
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx()
+    ax1.plot(gen, te_mins, label='TE min', color='blue')
+    ax1.plot(gen, te_avgs, label='TE avg', color='lightblue')
+    ax2.plot(gen, deg_maxs, label='DEG max', color='red')
+    ax2.plot(gen, deg_avgs, label='DEG avg', color='salmon')
+
+    ax1.set_xlabel('Generation')
+    ax1.set_ylabel('TE', color='blue')
+    ax2.set_ylabel('DEG', color='red')
+    
+    # ax1とax2の凡例をまとめて出力
+    handles1, labels1 = ax1.get_legend_handles_labels()
+    handles2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(handles1 + handles2, labels1 + labels2, loc='center right')
+
+    
+    plt.savefig('/home/sato-lab.org/takayu/project/sato-lab/slurm/logs/deap/img/plot' + jobid + '_Degonly.png')
+
+    seqs = ["".join(ind) for ind in pop]
+    st = set(seqs)
+    seqs = list(st)
+    print(seqs)
