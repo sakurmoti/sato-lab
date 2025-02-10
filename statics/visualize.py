@@ -18,19 +18,6 @@ gen = logbook.select("gen")
 fx = [x[0] for x in fxy]
 fy = [x[1] for x in fxy]
 
-# fig, ax1 = plt.subplots()
-# ax2 = ax1.twinx()
-# ax1.plot(gen, fx, label='TE avg', color='blue')
-# ax2.plot(gen, fy, label='DEG avg', color='red')
-# plt.xlabel("Generation")
-# ax1.set_ylabel('TE', color='blue')
-# ax2.set_ylabel('DEG', color='red')
-# handles1, labels1 = ax1.get_legend_handles_labels()
-# handles2, labels2 = ax2.get_legend_handles_labels()
-# ax1.legend(handles1 + handles2, labels1 + labels2)
-# plt.savefig(f"img/GARNA" + str(jobid) + ".png")
-
-
 fig, ax1 = plt.subplots(figsize=(8,6))
 ax2 = ax1.twinx()
 

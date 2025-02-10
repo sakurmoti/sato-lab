@@ -66,7 +66,6 @@ def main(fold=None):
     # 初期集団生成
     MU = 2000  # 集団サイズ
     NGEN = 1000  # 世代数
-    # NGEN = 600
     CXPB = 0.75  # 交叉確率
     MUTPB = 0.25  # 突然変異確率
     pop = toolbox.population(n=MU)
@@ -97,48 +96,41 @@ def main(fold=None):
     with open(path, 'wb') as f:
         pickle.dump(logbook, f)
     
-    # plot result
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    fxy = logbook.select("avg")
     gen = logbook.select("gen")
 
-    fit_mins = logbook.select("min")
-    fit_maxs = logbook.select("max")
-    fit_avgs = logbook.select("avg")
+    fx = [x[0] for x in fxy]
+    fy = [x[1] for x in fxy]
 
-    te_mins = [x[0] for x in fit_mins]
-    te_avgs = [x[0] for x in fit_avgs]
-    deg_maxs = [x[1] for x in fit_maxs]
-    deg_avgs = [x[1] for x in fit_avgs]
-
-
-    import matplotlib.pyplot as plt
-    fig, ax1 = plt.subplots()
+    fig, ax1 = plt.subplots(figsize=(8,6))
     ax2 = ax1.twinx()
-    ax1.plot(gen, te_mins, label='TE min', color='blue')
-    ax1.plot(gen, te_avgs, label='TE avg', color='lightblue')
-    ax2.plot(gen, deg_maxs, label='DEG max', color='red')
-    ax2.plot(gen, deg_avgs, label='DEG avg', color='salmon')
 
-    ax1.set_xlabel('Generation')
-    ax1.set_ylabel('TE', color='blue')
-    ax2.set_ylabel('DEG', color='red')
-    
-    # ax1とax2の凡例をまとめて出力
+    sns.lineplot(x=gen, y=fx, ax=ax1, label='TE avg', color='blue', legend=False)
+    sns.lineplot(x=gen, y=fy, ax=ax2, label='DEG avg', color='red', legend=False)
+
+    ax1.set_xlabel('Generation', fontsize=14)
+    ax1.set_ylabel('TE', color='blue', fontsize=14)
+    ax1.set_ylim(-0.7, 2.5)
+    ax2.set_ylabel('DEG', color='red', fontsize=14)
+    ax2.set_ylim(5.0, 24)
+
     handles1, labels1 = ax1.get_legend_handles_labels()
     handles2, labels2 = ax2.get_legend_handles_labels()
-    ax1.legend(handles1 + handles2, labels1 + labels2, loc='center right')
+    ax1.legend(handles1 + handles2, labels1 + labels2)
 
     path = '/home/sato-lab.org/takayu/project/sato-lab/slurm/logs/deap/img/plot' + jobid
     if(fold is not None):
         path += f"_fold{fold}"
     path += '.png'
-    plt.savefig(path)
+    plt.savefig(path, dpi=300, bbox_inches='tight')
 
     seqs = ["".join(ind) for ind in pop]
     st = set(seqs)
     seqs = list(st)
     print(len(seqs))
     print(seqs)
-    
 
 if __name__ == "__main__":
     main()
