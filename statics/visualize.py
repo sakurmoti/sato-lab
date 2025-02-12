@@ -7,8 +7,9 @@ import seaborn as sns
 import pickle
 
 # Load logbook
-jobid = 743
-with open('/home/sato-lab.org/takayu/project/sato-lab/slurm/logs/deap/img/logbook' + str(jobid) + '.pkl', 'rb') as f:
+jobid = 782
+
+with open('/home/sato-lab.org/takayu/project/sato-lab/slurm/logs/deap/logbook/logbook' + str(jobid) + '.pkl', 'rb') as f:
     logbook = pickle.load(f)
 
 
@@ -33,4 +34,4 @@ ax2.set_ylim(5.0, 24)
 handles1, labels1 = ax1.get_legend_handles_labels()
 handles2, labels2 = ax2.get_legend_handles_labels()
 ax1.legend(handles1 + handles2, labels1 + labels2)
-plt.savefig(f"img/GARNA" + str(jobid) + ".png", dpi=300, bbox_inches='tight')
+plt.savefig(f"/home/sato-lab.org/takayu/project/sato-lab/slurm/logs/statics/nsga2_unif/GARNA" + str(jobid) + ".png", dpi=300, bbox_inches='tight')

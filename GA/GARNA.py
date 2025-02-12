@@ -42,8 +42,8 @@ print("mutation: mutate, indpb=0.5")
 toolbox.register("mutate", mutate)
 
 
-# sel_f = "selNSGA3"
-sel_f = "selNSGA2"
+sel_f = "selNSGA3"
+# sel_f = "selNSGA2"
 if(sel_f == "selNSGA3"):
     print("selection: selNSGA3")
     toolbox.register("select", tools.selNSGA3, ref_points=tools.uniform_reference_points(nobj=2, p=12))
