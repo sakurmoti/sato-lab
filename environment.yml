@@ -11,13 +11,13 @@ dependencies:
   - brotli=1.1.0=hb9d3cd8_2
   - brotli-bin=1.1.0=hb9d3cd8_2
   - bzip2=1.0.8=h4bc722e_7
-  - ca-certificates=2024.12.14=hbcca054_0
+  - ca-certificates=2024.12.31=h06a4308_0
   - cairo=1.16.0=ha61ee94_1014
   - certifi=2024.12.14=py39h06a4308_0
   - colorlog=5.0.1=py39h06a4308_1
   - cycler=0.12.1=pyhd8ed1ab_1
   - dbus=1.13.6=h5008d03_3
-  - deap=1.4.1=py39h3b40f6f_3
+  - deap=1.4.2=py39h3b40f6f_0
   - einops=0.7.0=pyhd8ed1ab_1
   - expat=2.6.4=h5888daf_0
   - fftw=3.3.10=nompi_hf1063bd_110
@@ -51,6 +51,7 @@ dependencies:
   - lcms2=2.15=haa2dc70_1
   - ld_impl_linux-64=2.43=h712a8e2_2
   - lerc=4.0.0=h27087fc_0
+  - levenshtein=0.26.1=py39hf88036b_0
   - libasprintf=0.22.5=he8f35ee_3
   - libasprintf-devel=0.22.5=he8f35ee_3
   - libblas=3.9.0=16_linux64_openblas
@@ -121,7 +122,7 @@ dependencies:
   - numpy=1.26.2=py39h474f0d3_0
   - openjpeg=2.5.0=hfec8fc6_2
   - openssl=3.0.15=h5eee18b_0
-  - optuna=4.1.0=pyhd8ed1ab_1
+  - optuna=4.2.0=pyhd8ed1ab_0
   - packaging=24.2=pyhd8ed1ab_2
   - pandas=2.1.4=py39hddac248_0
   - pcre2=10.43=hcad00b1_0
@@ -141,9 +142,11 @@ dependencies:
   - pytz=2024.2=pyhd8ed1ab_1
   - pyyaml=6.0.2=py39h5eee18b_0
   - qt-main=5.15.8=h67dfc38_7
+  - rapidfuzz=3.11.0=py39hf88036b_0
   - readline=8.2=h8228510_1
   - scikit-learn=1.5.2=py39h4b7350c_1
   - scipy=1.11.4=py39h474f0d3_0
+  - seaborn=0.13.2=py39h06a4308_0
   - setuptools=75.6.0=pyhff2d567_1
   - sip=6.7.12=py39h3d6467e_0
   - six=1.17.0=pyhd8ed1ab_0
